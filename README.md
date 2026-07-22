@@ -26,10 +26,19 @@ Ogni push su `main`/`master` o tag `v*` avvia il workflow che:
 
 ### Scaricare l'IPA
 
+**Metodo consigliato — GitHub Releases:**
+
+1. Vai su [github.com/xSaturnMoon/gym/releases](https://github.com/xSaturnMoon/gym/releases)
+2. Apri la release **Latest Build**
+3. Scarica `Gym-unsigned.ipa` dagli asset in fondo alla pagina
+
+Ogni push su `main` aggiorna automaticamente questa release.
+
+**Metodo alternativo — Artifacts CI:**
+
 1. Vai su [github.com/xSaturnMoon/gym/actions](https://github.com/xSaturnMoon/gym/actions)
-2. Apri l'ultimo workflow completato con successo (segno verde)
-3. Scorri fino a **Artifacts** in fondo alla pagina
-4. Scarica **Gym-unsigned-ipa** (file `.zip` contenente `Gym-unsigned.ipa`)
+2. Apri l'ultimo workflow completato con successo
+3. Scarica l'artifact **Gym-unsigned-ipa**
 
 ## Installazione con SideStore
 

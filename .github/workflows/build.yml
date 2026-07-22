@@ -8,6 +8,9 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-latest
@@ -57,6 +60,39 @@ jobs:
           name: Gym-unsigned-ipa
           path: ${{ runner.temp }}/Gym-unsigned.ipa
           retention-days: 30
+
+      - name: Publish IPA to GitHub Release (latest)
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: Latest Build
+          body: |
+            IPA unsigned pronto per **SideStore**.
+
+            - Commit: `${{ github.sha }}`
+            - Workflow: [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - Bundle ID: `com.xsaturnmoon.gym`
+            - iOS minimo: **26.0**
+
+            ### Installazione
+            1. Scarica `Gym-unsigned.ipa` qui sotto
+            2. Importa in SideStore → My Apps → +
+            3. Refresh ogni 7 giorni con AltServer attivo
+          artifacts: ${{ runner.temp }}/Gym-unsigned.ipa
+          artifactContentType: application/octet-stream
+          allowUpdates: true
+          makeLatest: true
+          prerelease: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish IPA to GitHub Release (tagged)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ runner.temp }}/Gym-unsigned.ipa
+          generate_release_notes: true
+          prerelease: false
 
       - name: Upload archive (debug)
         if: failure()
