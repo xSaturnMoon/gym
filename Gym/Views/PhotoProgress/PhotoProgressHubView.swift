@@ -193,7 +193,7 @@ struct PhotoProgressHubView: View {
             Label("Privacy", systemImage: "lock.shield.fill")
                 .font(.headline)
 
-            Text("Le foto sono salvate solo sul tuo dispositivo. L'analisi AI invia la foto a Claude solo al momento dell'analisi, se abilitata.")
+            Text("Le foto sono salvate solo sul tuo dispositivo. L'analisi AI invia la foto a Gemini solo al momento dell'analisi, se abilitata.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -231,13 +231,13 @@ struct PhotoProgressSettingsView: View {
                 }
 
                 Section {
-                    Toggle("Analisi AI (Claude)", isOn: $aiEnabled)
-                    SecureField("Chiave API Anthropic", text: $apiKey)
+                    Toggle("Analisi AI (Gemini)", isOn: $aiEnabled)
+                    SecureField("Google Gemini API Key", text: $apiKey)
                         .textContentType(.password)
                 } header: {
                     Text("Analisi AI")
                 } footer: {
-                    Text("La chiave API resta sul dispositivo. La foto viene inviata a Claude solo al salvataggio, se l'analisi è attiva.")
+                    Text("La chiave API è salvata nel Keychain del dispositivo. Ottienila gratuitamente su aistudio.google.com/apikey")
                 }
             }
             .navigationTitle("Impostazioni foto")
@@ -257,7 +257,7 @@ struct PhotoProgressSettingsView: View {
 
     private func load() {
         let settings = settingsList.first ?? ProgressPhotoSettings()
-        apiKey = settings.claudeAPIKey ?? ""
+        apiKey = KeychainHelper.loadGeminiAPIKey() ?? ""
         aiEnabled = settings.aiAnalysisEnabled
         camera = settings.preferredCamera
         captureHour = settings.suggestedCaptureHour
@@ -269,7 +269,7 @@ struct PhotoProgressSettingsView: View {
             modelContext.insert(s)
             return s
         }()
-        settings.claudeAPIKey = apiKey.isEmpty ? nil : apiKey
+        KeychainHelper.saveGeminiAPIKey(apiKey)
         settings.aiAnalysisEnabled = aiEnabled
         settings.preferredCamera = camera
         settings.suggestedCaptureHour = captureHour

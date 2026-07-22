@@ -1,7 +1,9 @@
 import Foundation
 
 @MainActor
-enum ClaudeAnalysisService {
+enum GeminiAnalysisService {
+    private static let model = "gemini-2.5-flash"
+
     static let systemPrompt = """
     Sei un assistente di analisi progressi fisici per un'app di allenamento a casa.
     Ricevi foto NORMALIZZATE (allineate per posa/distanza) e metriche geometriche derivate dai landmark corporei.
@@ -21,7 +23,7 @@ enum ClaudeAnalysisService {
       "suggestions": ["suggerimento pratico..."],
       "comparabilityNote": "nota sulla qualità del confronto"
     }
-      "reliability" deve riflettere quanto le foto sono comparabili (posa, allineamento, luce).
+    "reliability" deve riflettere quanto le foto sono comparabili (posa, allineamento, luce).
     """
 
     static func analyze(
@@ -35,8 +37,104 @@ enum ClaudeAnalysisService {
         apiKey: String
     ) async throws -> AIAnalysisResult {
         let base64 = normalizedImageData.base64EncodedString()
-        let mediaType = "image/jpeg"
+        let userText = buildUserPrompt(
+            metrics: metrics,
+            baselineMetrics: baselineMetrics,
+            previousMetrics: previousMetrics,
+            comparabilityScore: comparabilityScore,
+            alignmentScore: alignmentScore,
+            activePlanName: activePlanName
+        )
 
+        let urlString = "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)"
+        guard let url = URL(string: urlString) else {
+            throw GeminiError.invalidURL
+        }
+
+        let body: [String: Any] = [
+            "system_instruction": [
+                "parts": [["text": systemPrompt]]
+            ],
+            "contents": [
+                [
+                    "parts": [
+                        [
+                            "inline_data": [
+                                "mime_type": "image/jpeg",
+                                "data": base64
+                            ]
+                        ],
+                        ["text": userText]
+                    ]
+                ]
+            ],
+            "generationConfig": [
+                "temperature": 0.2,
+                "maxOutputTokens": 1024
+            ]
+        ]
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+            let message = String(data: data, encoding: .utf8) ?? "Errore API"
+            throw GeminiError.apiError(message)
+        }
+
+        return try parseResponse(data)
+    }
+
+    static func localFallbackAnalysis(
+        metrics: BodyMetrics,
+        baseline: BodyMetrics?,
+        comparabilityScore: Double,
+        geometricChanges: [String]
+    ) -> AIAnalysisResult {
+        let reliability: AnalysisReliability = if comparabilityScore >= 0.8 {
+            .high
+        } else if comparabilityScore >= PoseGuideTemplate.minimumComparabilityScore {
+            .medium
+        } else {
+            .low
+        }
+
+        var changes = geometricChanges
+        if changes.isEmpty && baseline != nil {
+            changes.append("Nessun cambiamento significativo rilevato nelle metriche geometriche.")
+        } else if baseline == nil {
+            changes = ProgressMetricsService.descriptiveBaselineReport(metrics: metrics)
+        }
+
+        return AIAnalysisResult(
+            reliability: reliability,
+            summary: baseline == nil
+                ? "Foto di riferimento registrata. Le prossime foto verranno confrontate con questa baseline."
+                : "Analisi basata su metriche geometriche locali (API non configurata o disabilitata).",
+            observedChanges: changes,
+            localizedChanges: changes,
+            suggestions: [
+                "Scatta sempre alla stessa ora, con la stessa camera e sfondo neutro.",
+                "Allineati alla sagoma guida prima di ogni scatto.",
+                "Continua con costanza il piano di allenamento attivo."
+            ],
+            comparabilityNote: reliability == .low
+                ? "Confronto a bassa affidabilità: ripeti lo scatto allineandoti meglio alla guida."
+                : "Confronto basato su normalizzazione landmark."
+        )
+    }
+
+    private static func buildUserPrompt(
+        metrics: BodyMetrics,
+        baselineMetrics: BodyMetrics?,
+        previousMetrics: BodyMetrics?,
+        comparabilityScore: Double,
+        alignmentScore: Double,
+        activePlanName: String?
+    ) -> String {
         var userText = """
         Analizza questa foto di progresso normalizzata.
 
@@ -83,95 +181,24 @@ enum ClaudeAnalysisService {
             userText += "\n\nATTENZIONE: comparabilità sotto soglia. Imposta reliability a \"low\"."
         }
 
-        let body: [String: Any] = [
-            "model": "claude-sonnet-4-20250514",
-            "max_tokens": 1024,
-            "system": systemPrompt,
-            "messages": [
-                [
-                    "role": "user",
-                    "content": [
-                        [
-                            "type": "image",
-                            "source": [
-                                "type": "base64",
-                                "media_type": mediaType,
-                                "data": base64
-                            ]
-                        ],
-                        [
-                            "type": "text",
-                            "text": userText
-                        ]
-                    ]
-                ]
-            ]
-        ]
-
-        var request = URLRequest(url: URL(string: "https://api.anthropic.com/v1/messages")!)
-        request.httpMethod = "POST"
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
-            let message = String(data: data, encoding: .utf8) ?? "Errore API"
-            throw ClaudeError.apiError(message)
-        }
-
-        return try parseResponse(data)
-    }
-
-    static func localFallbackAnalysis(
-        metrics: BodyMetrics,
-        baseline: BodyMetrics?,
-        comparabilityScore: Double,
-        geometricChanges: [String]
-    ) -> AIAnalysisResult {
-        let reliability: AnalysisReliability = if comparabilityScore >= 0.8 {
-            .high
-        } else if comparabilityScore >= PoseGuideTemplate.minimumComparabilityScore {
-            .medium
-        } else {
-            .low
-        }
-
-        var changes = geometricChanges
-        if changes.isEmpty && baseline != nil {
-            changes.append("Nessun cambiamento significativo rilevato nelle metriche geometriche.")
-        } else if baseline == nil {
-            changes = ProgressMetricsService.descriptiveBaselineReport(metrics: metrics)
-        }
-
-        return AIAnalysisResult(
-            reliability: reliability,
-            summary: baseline == nil
-                ? "Foto di riferimento registrata. Le prossime foto verranno confrontate con questa baseline."
-                : "Analisi basata su metriche geometriche locali (API non configurata o disabilitata).",
-            observedChanges: changes,
-            localizedChanges: changes,
-            suggestions: [
-                "Scatta sempre alla stessa ora, con la stessa camera e sfondo neutro.",
-                "Allineati alla sagoma guida prima di ogni scatto.",
-                "Continua con costanza il piano di allenamento attivo."
-            ],
-            comparabilityNote: reliability == .low
-                ? "Confronto a bassa affidabilità: ripeti lo scatto allineandoti meglio alla guida."
-                : "Confronto basato su normalizzazione landmark."
-        )
+        return userText
     }
 
     private static func parseResponse(_ data: Data) throws -> AIAnalysisResult {
         struct APIResponse: Decodable {
-            struct Content: Decodable { let text: String }
-            let content: [Content]
+            struct Candidate: Decodable {
+                struct Content: Decodable {
+                    struct Part: Decodable { let text: String? }
+                    let parts: [Part]
+                }
+                let content: Content
+            }
+            let candidates: [Candidate]
         }
 
         let apiResponse = try JSONDecoder().decode(APIResponse.self, from: data)
-        guard let text = apiResponse.content.first?.text else {
-            throw ClaudeError.invalidResponse
+        guard let text = apiResponse.candidates.first?.content.parts.first?.text else {
+            throw GeminiError.invalidResponse
         }
 
         let cleaned = text
@@ -180,7 +207,7 @@ enum ClaudeAnalysisService {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard let jsonData = cleaned.data(using: .utf8) else {
-            throw ClaudeError.invalidResponse
+            throw GeminiError.invalidResponse
         }
 
         struct RawResult: Decodable {
@@ -213,16 +240,18 @@ enum ClaudeAnalysisService {
         }
     }
 
-    enum ClaudeError: LocalizedError {
+    enum GeminiError: LocalizedError {
         case apiError(String)
         case invalidResponse
+        case invalidURL
         case missingAPIKey
 
         var errorDescription: String? {
             switch self {
-            case .apiError(let msg): "Errore API Claude: \(msg)"
+            case .apiError(let msg): "Errore API Gemini: \(msg)"
             case .invalidResponse: "Risposta API non valida."
-            case .missingAPIKey: "Chiave API Claude non configurata."
+            case .invalidURL: "URL API non valido."
+            case .missingAPIKey: "Chiave API Google Gemini non configurata."
             }
         }
     }

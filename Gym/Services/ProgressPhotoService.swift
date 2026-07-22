@@ -88,7 +88,7 @@ final class ProgressPhotoService {
 
         if isBaseline {
             photo.analysisReport = ProgressAnalysisReport(
-                from: ClaudeAnalysisService.localFallbackAnalysis(
+                from: GeminiAnalysisService.localFallbackAnalysis(
                     metrics: metrics,
                     baseline: nil,
                     comparabilityScore: 1.0,
@@ -108,7 +108,7 @@ final class ProgressPhotoService {
                 ProgressMetricsService.metricChanges(current: metrics, baseline: $0)
             } ?? []
             photo.analysisReport = ProgressAnalysisReport(
-                from: ClaudeAnalysisService.localFallbackAnalysis(
+                from: GeminiAnalysisService.localFallbackAnalysis(
                     metrics: metrics,
                     baseline: baselineMetrics,
                     comparabilityScore: comparabilityScore,
@@ -140,10 +140,10 @@ final class ProgressPhotoService {
         var sentToAPI = false
 
         if settings.aiAnalysisEnabled,
-           let apiKey = settings.claudeAPIKey,
+           let apiKey = KeychainHelper.loadGeminiAPIKey(),
            !apiKey.isEmpty {
             let planName = activePlanName()
-            result = try await ClaudeAnalysisService.analyze(
+            result = try await GeminiAnalysisService.analyze(
                 normalizedImageData: imageData,
                 metrics: metrics,
                 baselineMetrics: baseline?.metrics,
@@ -155,7 +155,7 @@ final class ProgressPhotoService {
             )
             sentToAPI = true
         } else {
-            result = ClaudeAnalysisService.localFallbackAnalysis(
+            result = GeminiAnalysisService.localFallbackAnalysis(
                 metrics: metrics,
                 baseline: baseline?.metrics,
                 comparabilityScore: photo.comparabilityScore,

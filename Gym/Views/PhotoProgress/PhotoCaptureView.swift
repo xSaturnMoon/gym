@@ -327,7 +327,7 @@ struct PhotoCaptureScreen: View {
 
     private var captureControls: some View {
         VStack(spacing: 16) {
-            if settings?.aiAnalysisEnabled == true, !(settings?.claudeAPIKey ?? "").isEmpty {
+            if settings?.aiAnalysisEnabled == true, !(KeychainHelper.loadGeminiAPIKey() ?? "").isEmpty {
                 Label("Foto inviata per analisi al salvataggio", systemImage: "icloud.and.arrow.up")
                     .font(.caption2)
                     .foregroundStyle(.secondary)

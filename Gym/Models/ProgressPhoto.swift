@@ -131,7 +131,6 @@ final class ProgressPhoto {
 final class ProgressPhotoSettings {
     @Attribute(.unique) var id: String
     var preferredCameraRaw: String
-    var claudeAPIKey: String?
     var aiAnalysisEnabled: Bool
     var suggestedCaptureHour: Int
     var onboardingCompleted: Bool
@@ -144,14 +143,12 @@ final class ProgressPhotoSettings {
     init(
         id: String = "default",
         preferredCamera: CameraFacing = .front,
-        claudeAPIKey: String? = nil,
         aiAnalysisEnabled: Bool = true,
         suggestedCaptureHour: Int = 8,
         onboardingCompleted: Bool = false
     ) {
         self.id = id
         self.preferredCameraRaw = preferredCamera.rawValue
-        self.claudeAPIKey = claudeAPIKey
         self.aiAnalysisEnabled = aiAnalysisEnabled
         self.suggestedCaptureHour = suggestedCaptureHour
         self.onboardingCompleted = onboardingCompleted
