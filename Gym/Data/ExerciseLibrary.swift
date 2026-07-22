@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+@MainActor
 enum ExerciseLibrary {
     static func seed(into context: ModelContext) {
         allExercises.forEach { context.insert($0) }

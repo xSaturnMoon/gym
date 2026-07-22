@@ -1,6 +1,7 @@
 import Foundation
 import SwiftData
 
+@MainActor
 enum WorkoutPlansSeed {
     static func seed(into context: ModelContext) {
         let plans = [
