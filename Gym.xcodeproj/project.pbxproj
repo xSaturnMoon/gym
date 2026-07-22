@@ -28,6 +28,16 @@
 		A10000010000000000000013 /* ProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000013 /* ProgressView.swift */; };
 		A10000010000000000000014 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000014 /* ProfileView.swift */; };
 		A10000010000000000000015 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000015 /* Assets.xcassets */; };
+		A10000010000000000000017 /* BodyPoseTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000017 /* BodyPoseTypes.swift */; };
+		A10000010000000000000018 /* ProgressPhoto.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000018 /* ProgressPhoto.swift */; };
+		A10000010000000000000019 /* BodyPoseDetectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000019 /* BodyPoseDetectionService.swift */; };
+		A1000001000000000000001A /* PhotoNormalizationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000001A /* PhotoNormalizationService.swift */; };
+		A1000001000000000000001B /* ProgressMetricsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000001B /* ProgressMetricsService.swift */; };
+		A1000001000000000000001C /* ClaudeAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000001C /* ClaudeAnalysisService.swift */; };
+		A1000001000000000000001D /* ProgressPhotoService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000001D /* ProgressPhotoService.swift */; };
+		A1000001000000000000001E /* PhotoCaptureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000001E /* PhotoCaptureView.swift */; };
+		A1000001000000000000001F /* PhotoProgressComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001000000000000001F /* PhotoProgressComponents.swift */; };
+		A10000010000000000000020 /* PhotoProgressHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000010000000000000020 /* PhotoProgressHubView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +63,16 @@
 		A20000010000000000000014 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		A20000010000000000000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000010000000000000016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A20000010000000000000017 /* BodyPoseTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyPoseTypes.swift; sourceTree = "<group>"; };
+		A20000010000000000000018 /* ProgressPhoto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressPhoto.swift; sourceTree = "<group>"; };
+		A20000010000000000000019 /* BodyPoseDetectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BodyPoseDetectionService.swift; sourceTree = "<group>"; };
+		A2000001000000000000001A /* PhotoNormalizationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoNormalizationService.swift; sourceTree = "<group>"; };
+		A2000001000000000000001B /* ProgressMetricsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressMetricsService.swift; sourceTree = "<group>"; };
+		A2000001000000000000001C /* ClaudeAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAnalysisService.swift; sourceTree = "<group>"; };
+		A2000001000000000000001D /* ProgressPhotoService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressPhotoService.swift; sourceTree = "<group>"; };
+		A2000001000000000000001E /* PhotoCaptureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoCaptureView.swift; sourceTree = "<group>"; };
+		A2000001000000000000001F /* PhotoProgressComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoProgressComponents.swift; sourceTree = "<group>"; };
+		A20000010000000000000020 /* PhotoProgressHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoProgressHubView.swift; sourceTree = "<group>"; };
 		A30000010000000000000001 /* Gym.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Gym.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -105,6 +125,8 @@
 				A20000010000000000000004 /* Exercise.swift */,
 				A20000010000000000000005 /* WorkoutPlan.swift */,
 				A20000010000000000000006 /* WorkoutSession.swift */,
+				A20000010000000000000017 /* BodyPoseTypes.swift */,
+				A20000010000000000000018 /* ProgressPhoto.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -126,6 +148,11 @@
 				A2000001000000000000000B /* HapticService.swift */,
 				A2000001000000000000000C /* NotificationService.swift */,
 				A2000001000000000000000D /* WorkoutTimer.swift */,
+				A20000010000000000000019 /* BodyPoseDetectionService.swift */,
+				A2000001000000000000001A /* PhotoNormalizationService.swift */,
+				A2000001000000000000001B /* ProgressMetricsService.swift */,
+				A2000001000000000000001C /* ClaudeAnalysisService.swift */,
+				A2000001000000000000001D /* ProgressPhotoService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -139,6 +166,7 @@
 				A5000001000000000000000B /* Exercises */,
 				A5000001000000000000000C /* Progress */,
 				A5000001000000000000000D /* Profile */,
+				A5000001000000000000000E /* PhotoProgress */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -190,6 +218,16 @@
 				A20000010000000000000014 /* ProfileView.swift */,
 			);
 			path = Profile;
+			sourceTree = "<group>";
+		};
+		A5000001000000000000000E /* PhotoProgress */ = {
+			isa = PBXGroup;
+			children = (
+				A2000001000000000000001E /* PhotoCaptureView.swift */,
+				A2000001000000000000001F /* PhotoProgressComponents.swift */,
+				A20000010000000000000020 /* PhotoProgressHubView.swift */,
+			);
+			path = PhotoProgress;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -281,6 +319,16 @@
 				A10000010000000000000012 /* ExercisesView.swift in Sources */,
 				A10000010000000000000013 /* ProgressView.swift in Sources */,
 				A10000010000000000000014 /* ProfileView.swift in Sources */,
+				A10000010000000000000017 /* BodyPoseTypes.swift in Sources */,
+				A10000010000000000000018 /* ProgressPhoto.swift in Sources */,
+				A10000010000000000000019 /* BodyPoseDetectionService.swift in Sources */,
+				A1000001000000000000001A /* PhotoNormalizationService.swift in Sources */,
+				A1000001000000000000001B /* ProgressMetricsService.swift in Sources */,
+				A1000001000000000000001C /* ClaudeAnalysisService.swift in Sources */,
+				A1000001000000000000001D /* ProgressPhotoService.swift in Sources */,
+				A1000001000000000000001E /* PhotoCaptureView.swift in Sources */,
+				A1000001000000000000001F /* PhotoProgressComponents.swift in Sources */,
+				A10000010000000000000020 /* PhotoProgressHubView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

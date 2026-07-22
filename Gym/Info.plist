@@ -40,5 +40,7 @@
     <false/>
     <key>NSUserNotificationsUsageDescription</key>
     <string>Gym usa le notifiche per ricordarti il tuo allenamento quotidiano.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Gym usa la fotocamera per scattare foto di progresso fisico con guida alla posa.</string>
 </dict>
 </plist>

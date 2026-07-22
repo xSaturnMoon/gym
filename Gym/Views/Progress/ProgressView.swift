@@ -26,6 +26,7 @@ struct GymProgressView: View {
             ScrollView {
                 GlassEffectContainer(spacing: 20) {
                     VStack(spacing: 20) {
+                        photoProgressEntry
                         statsOverview
                         streakHeatmap
                         periodPicker
@@ -46,6 +47,38 @@ struct GymProgressView: View {
             .navigationTitle("Progressi")
             .onAppear { engine = WorkoutEngine(modelContext: modelContext) }
         }
+    }
+
+    private var photoProgressEntry: some View {
+        NavigationLink {
+            PhotoProgressHubView()
+        } label: {
+            HStack(spacing: 16) {
+                Image(systemName: "camera.fill")
+                    .font(.title2)
+                    .foregroundStyle(.accent)
+                    .frame(width: 48, height: 48)
+                    .glassEffect(.regular.tint(.accentColor.opacity(0.15)), in: .circle)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Foto Progressi")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text("Scatta, confronta e analizza i cambiamenti fisici")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding()
+            .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 20))
+        }
+        .buttonStyle(.plain)
     }
 
     private var statsOverview: some View {

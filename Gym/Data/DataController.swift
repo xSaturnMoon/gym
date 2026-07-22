@@ -10,6 +10,7 @@ final class DataController {
         let container = try! ModelContainer(
             for: Exercise.self, WorkoutPlan.self, PlannedDay.self, PlannedExercise.self,
                  WorkoutSession.self, CompletedExercise.self, CompletedSet.self, UserProfile.self,
+                 ProgressPhoto.self, ProgressAnalysisReport.self, ProgressPhotoSettings.self,
             configurations: config
         )
         let context = container.mainContext
@@ -23,7 +24,8 @@ final class DataController {
         do {
             container = try ModelContainer(
                 for: Exercise.self, WorkoutPlan.self, PlannedDay.self, PlannedExercise.self,
-                     WorkoutSession.self, CompletedExercise.self, CompletedSet.self, UserProfile.self
+                     WorkoutSession.self, CompletedExercise.self, CompletedSet.self, UserProfile.self,
+                     ProgressPhoto.self, ProgressAnalysisReport.self, ProgressPhotoSettings.self
             )
         } catch {
             fatalError("Impossibile inizializzare SwiftData: \(error)")
