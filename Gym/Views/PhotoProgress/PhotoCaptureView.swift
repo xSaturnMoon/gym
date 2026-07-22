@@ -1,6 +1,7 @@
 import AVFoundation
 import Vision
 import UIKit
+import SwiftUI
 import Combine
 
 @MainActor
@@ -37,16 +38,18 @@ final class CameraPoseManager: NSObject, ObservableObject {
     }
 
     func start() {
-        processingQueue.async { [weak self] in
-            guard let self, !self.session.isRunning else { return }
-            self.session.startRunning()
+        let session = session
+        processingQueue.async {
+            guard !session.isRunning else { return }
+            session.startRunning()
         }
     }
 
     func stop() {
-        processingQueue.async { [weak self] in
-            guard let self, self.session.isRunning else { return }
-            self.session.stopRunning()
+        let session = session
+        processingQueue.async {
+            guard session.isRunning else { return }
+            session.stopRunning()
         }
     }
 
@@ -167,7 +170,9 @@ struct CameraPreviewView: UIViewRepresentable {
         return view
     }
 
-    func updateUIView(_ uiView: PreviewUIView, context: Context) {}
+    func updateUIView(_ uiView: PreviewUIView, context: Context) {
+        uiView.previewLayer.session = session
+    }
 
     final class PreviewUIView: UIView {
         override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }

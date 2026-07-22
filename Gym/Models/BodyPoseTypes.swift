@@ -67,7 +67,7 @@ struct BodyPoseSnapshot: Codable {
     ]
 
     var hasRequiredJoints: Bool {
-        requiredJoints.allSatisfy { point(for: $0) != nil }
+        Self.requiredJoints.allSatisfy { point(for: $0) != nil }
     }
 
     var averageConfidence: Float {
@@ -87,17 +87,6 @@ struct BodyMetrics: Codable, Equatable {
     var armsDefinition: Double
     var legsDefinition: Double
     var postureScore: Double
-
-    static let metricLabels: [(key: WritableKeyPath<BodyMetrics, Double>, label: String, unit: String)] = [
-        (\.shoulderToHipRatio, "Rapporto spalle/fianchi", ""),
-        (\.shoulderAlignmentDegrees, "Allineamento spalle", "°"),
-        (\.hipAlignmentDegrees, "Allineamento bacino", "°"),
-        (\.torsoLength, "Lunghezza torso", ""),
-        (\.abdomenDefinition, "Definizione addome", ""),
-        (\.armsDefinition, "Definizione braccia", ""),
-        (\.legsDefinition, "Definizione gambe", ""),
-        (\.postureScore, "Punteggio postura", "")
-    ]
 
     func delta(from other: BodyMetrics) -> [String: Double] {
         var result: [String: Double] = [:]
