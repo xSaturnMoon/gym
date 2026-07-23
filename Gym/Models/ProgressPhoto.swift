@@ -134,23 +134,34 @@ final class ProgressPhotoSettings {
     var aiAnalysisEnabled: Bool
     var suggestedCaptureHour: Int
     var onboardingCompleted: Bool
+    var captureTimerSeconds: Int
+    var censorIntimateAreas: Bool
 
     var preferredCamera: CameraFacing {
-        get { CameraFacing(rawValue: preferredCameraRaw) ?? .front }
+        get { CameraFacing(rawValue: preferredCameraRaw) ?? .back }
         set { preferredCameraRaw = newValue.rawValue }
+    }
+
+    var captureTimer: CaptureTimerOption {
+        get { CaptureTimerOption(rawValue: captureTimerSeconds) ?? .five }
+        set { captureTimerSeconds = newValue.rawValue }
     }
 
     init(
         id: String = "default",
-        preferredCamera: CameraFacing = .front,
+        preferredCamera: CameraFacing = .back,
         aiAnalysisEnabled: Bool = true,
         suggestedCaptureHour: Int = 8,
-        onboardingCompleted: Bool = false
+        onboardingCompleted: Bool = false,
+        captureTimerSeconds: Int = CaptureTimerOption.five.rawValue,
+        censorIntimateAreas: Bool = true
     ) {
         self.id = id
         self.preferredCameraRaw = preferredCamera.rawValue
         self.aiAnalysisEnabled = aiAnalysisEnabled
         self.suggestedCaptureHour = suggestedCaptureHour
         self.onboardingCompleted = onboardingCompleted
+        self.captureTimerSeconds = captureTimerSeconds
+        self.censorIntimateAreas = censorIntimateAreas
     }
 }

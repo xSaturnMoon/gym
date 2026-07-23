@@ -134,7 +134,16 @@ final class ProgressPhotoService {
             []
         }
 
-        let imageData = photo.normalizedImageData ?? photo.imageData
+        let rawImageData = photo.normalizedImageData ?? photo.imageData
+        let imageData: Data
+        if settings.censorIntimateAreas,
+           let image = UIImage(data: rawImageData),
+           let snapshot = photo.poseSnapshot,
+           let censoredData = IntimateAreaCensorshipService.censoredJPEGData(from: image, snapshot: snapshot) {
+            imageData = censoredData
+        } else {
+            imageData = rawImageData
+        }
 
         let result: AIAnalysisResult
         var sentToAPI = false

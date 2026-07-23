@@ -226,7 +226,7 @@ struct PoseGuideOverlay: View {
         VStack(spacing: 6) {
             Text("Suggerimenti")
                 .font(.caption.weight(.bold))
-            Text("Stessa camera · Sfondo neutro · Mattina · Braccia leggermente distanziate")
+            Text("Posteriore + timer · 2–3 m di distanza · Sfondo neutro · Braccia leggermente distanziate")
                 .font(.caption2)
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
@@ -281,6 +281,9 @@ struct PhotoCaptureScreen: View {
     @StateObject private var camera = CameraPoseManager()
     @State private var service: ProgressPhotoService?
     @State private var settings: ProgressPhotoSettings?
+    @State private var activeCamera: CameraFacing = .back
+    @State private var captureTimer: CaptureTimerOption = .five
+    @State private var countdown: Int?
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -295,9 +298,14 @@ struct PhotoCaptureScreen: View {
                         isAligned: camera.isAligned
                     ).ignoresSafeArea()
 
-                    VStack {
+                    VStack(spacing: 12) {
+                        setupGuide
                         Spacer()
                         captureControls
+                    }
+
+                    if let countdown {
+                        countdownOverlay(countdown)
                     }
                 } else {
                     EmptyStateView(
@@ -313,6 +321,14 @@ struct PhotoCaptureScreen: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Annulla") { camera.stop(); dismiss() }
                 }
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        Task { await switchCamera() }
+                    } label: {
+                        Image(systemName: activeCamera.systemImage)
+                    }
+                    .disabled(countdown != nil || isSaving)
+                }
             }
             .alert("Errore", isPresented: .init(
                 get: { errorMessage != nil },
@@ -325,25 +341,56 @@ struct PhotoCaptureScreen: View {
             .task {
                 service = ProgressPhotoService(modelContext: modelContext)
                 settings = service?.settings()
-                await camera.configure(camera: settings?.preferredCamera ?? .front)
+                activeCamera = settings?.preferredCamera ?? .back
+                captureTimer = settings?.captureTimer ?? .five
+                await camera.configure(camera: activeCamera)
                 camera.start()
             }
             .onDisappear { camera.stop() }
         }
     }
 
+    private var setupGuide: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(activeCamera.rawValue, systemImage: activeCamera.systemImage)
+                .font(.subheadline.weight(.semibold))
+            Text(activeCamera.captureHint)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .glassEffect(.regular, in: .rect(cornerRadius: 16))
+        .padding(.horizontal)
+        .padding(.top, 8)
+    }
+
     private var captureControls: some View {
         VStack(spacing: 16) {
+            Picker("Timer", selection: $captureTimer) {
+                ForEach(CaptureTimerOption.allCases) { option in
+                    Text(option.label).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal)
+            .disabled(countdown != nil || isSaving)
+
             if settings?.aiAnalysisEnabled == true, !(KeychainHelper.loadGeminiAPIKey() ?? "").isEmpty {
-                Label("Foto inviata per analisi al salvataggio", systemImage: "icloud.and.arrow.up")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .glassEffect(.regular, in: .capsule)
+                VStack(spacing: 4) {
+                    Label("Analisi AI al salvataggio", systemImage: "icloud.and.arrow.up")
+                    if settings?.censorIntimateAreas != false {
+                        Label("Zone intime pixelate prima dell'invio", systemImage: "eye.slash.fill")
+                    }
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .glassEffect(.regular, in: .capsule)
             }
 
-            Button { Task { await capturePhoto() } } label: {
+            Button { Task { await startCapture() } } label: {
                 ZStack {
                     Circle().strokeBorder(.white, lineWidth: 4).frame(width: 76, height: 76)
                     Circle()
@@ -351,10 +398,53 @@ struct PhotoCaptureScreen: View {
                         .frame(width: 62, height: 62)
                 }
             }
-            .disabled(!camera.isAligned || isSaving)
+            .disabled(!camera.isAligned || isSaving || countdown != nil)
             .overlay { if isSaving { ProgressView().tint(.white) } }
         }
         .padding(.bottom, 40)
+    }
+
+    private func countdownOverlay(_ value: Int) -> some View {
+        ZStack {
+            Color.black.opacity(0.45).ignoresSafeArea()
+            Text("\(value)")
+                .font(.system(size: 96, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .contentTransition(.numericText())
+        }
+    }
+
+    private func switchCamera() async {
+        activeCamera = activeCamera == .front ? .back : .front
+        camera.stop()
+        await camera.configure(camera: activeCamera)
+        camera.start()
+    }
+
+    private func startCapture() async {
+        guard countdown == nil else { return }
+
+        if captureTimer == .immediate {
+            await capturePhoto()
+            return
+        }
+
+        var remaining = captureTimer.rawValue
+        countdown = remaining
+        HapticService.medium()
+
+        while remaining > 0 {
+            try? await Task.sleep(for: .seconds(1))
+            remaining -= 1
+            if remaining > 0 {
+                countdown = remaining
+                HapticService.medium()
+            } else {
+                countdown = nil
+                HapticService.success()
+                await capturePhoto()
+            }
+        }
     }
 
     private func capturePhoto() async {
@@ -364,10 +454,14 @@ struct PhotoCaptureScreen: View {
 
         do {
             let (image, snapshot) = try await camera.capturePhoto()
+            settings.preferredCamera = activeCamera
+            settings.captureTimer = captureTimer
+            try? modelContext.save()
+
             _ = try await service.savePhoto(
                 image: image,
                 snapshot: snapshot,
-                camera: settings.preferredCamera,
+                camera: activeCamera,
                 alignmentScore: camera.alignmentScore,
                 runAIAnalysis: settings.aiAnalysisEnabled
             )

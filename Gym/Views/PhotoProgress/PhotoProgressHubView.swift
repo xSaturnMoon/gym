@@ -193,7 +193,7 @@ struct PhotoProgressHubView: View {
             Label("Privacy", systemImage: "lock.shield.fill")
                 .font(.headline)
 
-            Text("Le foto sono salvate solo sul tuo dispositivo. L'analisi AI invia la foto a Gemini solo al momento dell'analisi, se abilitata.")
+            Text("Le foto restano solo sul dispositivo. Se abiliti l'analisi AI, a Gemini viene inviata una versione con torace e zona pelvica pixelati: l'originale non esce mai dal telefono.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -215,29 +215,41 @@ struct PhotoProgressSettingsView: View {
 
     @State private var apiKey = ""
     @State private var aiEnabled = true
-    @State private var camera: CameraFacing = .front
+    @State private var camera: CameraFacing = .back
     @State private var captureHour = 8
+    @State private var captureTimer: CaptureTimerOption = .five
+    @State private var censorIntimateAreas = true
 
     var body: some View {
         NavigationStack {
             Form {
-                Section("Camera") {
-                    Picker("Fotocamera", selection: $camera) {
+                Section {
+                    Picker("Fotocamera predefinita", selection: $camera) {
                         ForEach(CameraFacing.allCases) { facing in
                             Text(facing.rawValue).tag(facing)
                         }
                     }
+                    Picker("Timer autoscatto", selection: $captureTimer) {
+                        ForEach(CaptureTimerOption.allCases) { option in
+                            Text(option.label).tag(option)
+                        }
+                    }
                     Stepper("Ora consigliata: \(captureHour):00", value: $captureHour, in: 5...12)
+                } header: {
+                    Text("Scatto")
+                } footer: {
+                    Text("Per il corpo intero usa la posteriore: appoggia il telefono, avvia il timer e posizionati nella sagoma.")
                 }
 
                 Section {
                     Toggle("Analisi AI (Gemini)", isOn: $aiEnabled)
+                    Toggle("Censura zone intime per l'AI", isOn: $censorIntimateAreas)
                     SecureField("Google Gemini API Key", text: $apiKey)
                         .textContentType(.password)
                 } header: {
                     Text("Analisi AI")
                 } footer: {
-                    Text("La chiave API è salvata nel Keychain del dispositivo. Ottienila gratuitamente su aistudio.google.com/apikey")
+                    Text("La chiave API è salvata nel Keychain. Con la censura attiva, torace e bacino vengono pixelati sulla copia inviata a Gemini; sul telefono resta l'originale.")
                 }
             }
             .navigationTitle("Impostazioni foto")
@@ -261,6 +273,8 @@ struct PhotoProgressSettingsView: View {
         aiEnabled = settings.aiAnalysisEnabled
         camera = settings.preferredCamera
         captureHour = settings.suggestedCaptureHour
+        captureTimer = settings.captureTimer
+        censorIntimateAreas = settings.censorIntimateAreas
     }
 
     private func save() {
@@ -273,6 +287,8 @@ struct PhotoProgressSettingsView: View {
         settings.aiAnalysisEnabled = aiEnabled
         settings.preferredCamera = camera
         settings.suggestedCaptureHour = captureHour
+        settings.captureTimer = captureTimer
+        settings.censorIntimateAreas = censorIntimateAreas
         try? modelContext.save()
     }
 }

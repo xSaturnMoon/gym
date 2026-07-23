@@ -13,6 +13,38 @@ enum CameraFacing: String, Codable, CaseIterable, Identifiable {
         case .back: "back"
         }
     }
+
+    var captureHint: String {
+        switch self {
+        case .front:
+            "La frontale è comoda ma inquadra al massimo busto e cosce. Per il corpo intero usa la posteriore con timer."
+        case .back:
+            "Appoggia il telefono a ~2 m, usa il timer, poi posizionati nella sagoma. Ideale per foto a corpo intero."
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .front: "camera.fill"
+        case .back: "camera.rotate.fill"
+        }
+    }
+}
+
+enum CaptureTimerOption: Int, CaseIterable, Identifiable {
+    case immediate = 0
+    case five = 5
+    case ten = 10
+
+    var id: Int { rawValue }
+
+    var label: String {
+        switch self {
+        case .immediate: "Subito"
+        case .five: "5 secondi"
+        case .ten: "10 secondi"
+        }
+    }
 }
 
 enum AnalysisReliability: String, Codable, CaseIterable {
