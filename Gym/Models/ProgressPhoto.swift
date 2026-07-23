@@ -130,12 +130,12 @@ final class ProgressPhoto {
 @Model
 final class ProgressPhotoSettings {
     @Attribute(.unique) var id: String
-    var preferredCameraRaw: String
-    var aiAnalysisEnabled: Bool
-    var suggestedCaptureHour: Int
-    var onboardingCompleted: Bool
-    var captureTimerSeconds: Int
-    var censorIntimateAreas: Bool
+    var preferredCameraRaw: String = CameraFacing.back.rawValue
+    var aiAnalysisEnabled: Bool = true
+    var suggestedCaptureHour: Int = 8
+    var onboardingCompleted: Bool = false
+    var captureTimerSeconds: Int = CaptureTimerOption.five.rawValue
+    var censorIntimateAreas: Bool = true
 
     var preferredCamera: CameraFacing {
         get { CameraFacing(rawValue: preferredCameraRaw) ?? .back }
