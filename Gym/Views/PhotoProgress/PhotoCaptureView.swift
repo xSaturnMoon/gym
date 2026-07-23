@@ -1,4 +1,4 @@
-import AVFoundation
+@preconcurrency import AVFoundation
 import Vision
 import UIKit
 import SwiftUI
@@ -17,11 +17,13 @@ final class CameraPoseManager: NSObject, ObservableObject {
     private let photoOutput = AVCapturePhotoOutput()
     private let processingQueue = DispatchQueue(label: "gym.camera.pose", qos: .userInitiated)
     private var cameraFacing: CameraFacing = .front
-    private var isProcessing = false
+    private nonisolated(unsafe) var detectionOrientation: CGImagePropertyOrientation = .leftMirrored
+    private nonisolated(unsafe) var isProcessingFrame = false
     private var photoDelegate: PhotoDelegate?
 
     func configure(camera: CameraFacing) async {
         cameraFacing = camera
+        detectionOrientation = camera == .front ? .leftMirrored : .right
         switch AVCaptureDevice.authorizationStatus(for: .video) {
         case .authorized:
             permissionGranted = true
@@ -111,22 +113,22 @@ extension CameraPoseManager: AVCaptureVideoDataOutputSampleBufferDelegate {
         from connection: AVCaptureConnection
     ) {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+        guard !isProcessingFrame else { return }
+        isProcessingFrame = true
+        defer { isProcessingFrame = false }
+
+        let orientation = detectionOrientation
+        let result: Result<BodyPoseSnapshot, Error> = Result {
+            try BodyPoseDetectionService.detectPose(in: pixelBuffer, orientation: orientation)
+        }
 
         Task { @MainActor in
-            guard !isProcessing else { return }
-            isProcessing = true
-            defer { isProcessing = false }
-
-            do {
-                let orientation: CGImagePropertyOrientation = cameraFacing == .front ? .leftMirrored : .right
-                let snapshot = try await BodyPoseDetectionService.detectPose(
-                    in: pixelBuffer,
-                    orientation: orientation
-                )
+            switch result {
+            case .success(let snapshot):
                 currentSnapshot = snapshot
                 alignmentScore = BodyPoseDetectionService.alignmentScore(for: snapshot)
                 isAligned = BodyPoseDetectionService.isAlignedForCapture(snapshot)
-            } catch {
+            case .failure:
                 currentSnapshot = nil
                 alignmentScore = 0
                 isAligned = false

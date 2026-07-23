@@ -2,7 +2,6 @@ import Vision
 import UIKit
 import CoreGraphics
 
-@MainActor
 enum BodyPoseDetectionService {
     private static let jointMap: [VNHumanBodyPoseObservation.JointName: String] = [
         .neck: "neck",
@@ -28,26 +27,32 @@ enum BodyPoseDetectionService {
         return try await detectPose(in: cgImage, orientation: cgImageOrientation(from: image))
     }
 
-    static func detectPose(in pixelBuffer: CVPixelBuffer, orientation: CGImagePropertyOrientation = .up) async throws -> BodyPoseSnapshot {
-        try await withCheckedThrowingContinuation { continuation in
-            let request = VNDetectHumanBodyPoseRequest { request, error in
-                if let error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                guard let observation = (request.results as? [VNHumanBodyPoseObservation])?.first else {
-                    continuation.resume(throwing: PoseDetectionError.noBodyDetected)
-                    return
-                }
-                continuation.resume(returning: snapshot(from: observation))
+    static func detectPose(in pixelBuffer: CVPixelBuffer, orientation: CGImagePropertyOrientation = .up) throws -> BodyPoseSnapshot {
+        var detectedSnapshot: BodyPoseSnapshot?
+        var detectionError: Error?
+
+        let request = VNDetectHumanBodyPoseRequest { request, error in
+            if let error {
+                detectionError = error
+                return
             }
-            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: orientation, options: [:])
-            do {
-                try handler.perform([request])
-            } catch {
-                continuation.resume(throwing: error)
+            guard let observation = (request.results as? [VNHumanBodyPoseObservation])?.first else {
+                detectionError = PoseDetectionError.noBodyDetected
+                return
             }
+            detectedSnapshot = snapshot(from: observation)
         }
+
+        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, orientation: orientation, options: [:])
+        try handler.perform([request])
+
+        if let detectionError {
+            throw detectionError
+        }
+        guard let detectedSnapshot else {
+            throw PoseDetectionError.noBodyDetected
+        }
+        return detectedSnapshot
     }
 
     static func detectPose(in cgImage: CGImage, orientation: CGImagePropertyOrientation = .up) async throws -> BodyPoseSnapshot {
